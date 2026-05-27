@@ -1,0 +1,1657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SmartHire AI — Career Copilot</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800;900&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#060910;--card:rgba(255,255,255,0.04);--border:rgba(255,255,255,0.08);
+  --blue:#3b82f6;--indigo:#6366f1;--purple:#a855f7;--green:#10b981;
+  --yellow:#f59e0b;--red:#ef4444;--text:#e2e8f0;--muted:#64748b;--sub:#94a3b8;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;min-height:100vh;overflow-x:hidden;}
+.orbs{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
+.orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:0.07;animation:drift 20s ease-in-out infinite alternate;}
+.orb1{width:600px;height:600px;background:var(--indigo);top:-200px;left:-150px;}
+.orb2{width:500px;height:500px;background:var(--purple);bottom:-150px;right:-100px;animation-delay:-7s;}
+.orb3{width:400px;height:400px;background:var(--blue);top:40%;left:40%;animation-delay:-14s;}
+@keyframes drift{from{transform:translate(0,0)scale(1);}to{transform:translate(40px,30px)scale(1.1);}}
+
+/* ── AUTH PAGE ── */
+#authPage{position:fixed;inset:0;z-index:999;background:var(--bg);display:flex;align-items:center;justify-content:center;}
+.auth-wrap{width:100%;max-width:440px;padding:24px;}
+.auth-card{background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:24px;padding:40px;backdrop-filter:blur(20px);}
+.auth-logo{display:flex;align-items:center;gap:10px;justify-content:center;margin-bottom:28px;}
+.auth-logo-icon{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--blue),var(--indigo));
+  display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:#fff;box-shadow:0 4px 20px rgba(99,102,241,0.4);}
+.auth-logo-text{font-size:22px;font-weight:900;background:linear-gradient(135deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.auth-tabs{display:flex;border-radius:12px;overflow:hidden;border:1px solid var(--border);margin-bottom:28px;}
+.auth-tab{flex:1;padding:11px;text-align:center;font-size:14px;font-weight:700;cursor:pointer;
+  background:transparent;border:none;color:var(--sub);font-family:'Outfit',sans-serif;transition:all 0.2s;}
+.auth-tab.active{background:rgba(99,102,241,0.25);color:#a5b4fc;}
+.inp-group{margin-bottom:16px;}
+.inp-group label{font-size:13px;color:var(--sub);margin-bottom:6px;display:block;}
+.inp-group input{width:100%;background:rgba(0,0,0,0.4);border:1px solid var(--border);border-radius:10px;
+  color:var(--text);padding:12px 16px;font-size:14px;font-family:'Outfit',sans-serif;outline:none;transition:border-color 0.2s;}
+.inp-group input:focus{border-color:rgba(99,102,241,0.6);}
+.inp-icon{position:relative;}
+.inp-icon input{padding-left:42px;}
+.inp-icon .icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:16px;}
+.auth-btn{width:100%;padding:13px;border-radius:12px;border:none;cursor:pointer;font-size:15px;font-weight:700;
+  font-family:'Outfit',sans-serif;background:linear-gradient(135deg,var(--blue),var(--indigo));color:#fff;
+  box-shadow:0 4px 20px rgba(99,102,241,0.4);transition:all 0.2s;margin-top:4px;}
+.auth-btn:hover{transform:translateY(-2px);}
+
+
+.forgot-link{text-align:right;font-size:12px;color:var(--blue);cursor:pointer;margin-top:-8px;margin-bottom:16px;}
+.forgot-link:hover{text-decoration:underline;}
+.auth-footer{text-align:center;margin-top:16px;font-size:13px;color:var(--muted);}
+.auth-footer span{color:var(--blue);cursor:pointer;}
+.auth-footer span:hover{text-decoration:underline;}
+.auth-msg{padding:10px 14px;border-radius:8px;font-size:13px;margin-top:12px;text-align:center;}
+.auth-msg.error{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:#fca5a5;}
+.auth-msg.success{background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.25);color:#6ee7b7;}
+.auth-msg.info{background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.25);color:#a5b4fc;}
+
+/* ── FORGOT PASSWORD MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(6px);
+  z-index:1000;display:none;align-items:center;justify-content:center;}
+.modal-overlay.show{display:flex;}
+.modal-box{background:#0d1117;border:1px solid var(--border);border-radius:20px;padding:32px;width:100%;max-width:400px;}
+.modal-title{font-size:18px;font-weight:800;margin-bottom:6px;text-align:center;}
+.modal-sub{font-size:13px;color:var(--muted);text-align:center;margin-bottom:20px;}
+
+/* ── MAIN APP ── */
+#mainApp{display:none;}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(6,9,16,0.9);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;height:64px;}
+.logo{display:flex;align-items:center;gap:10px;cursor:pointer;}
+.logo-icon{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--blue),var(--indigo));
+  display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;}
+.logo-text{font-size:17px;font-weight:800;background:linear-gradient(135deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.nav-center{display:flex;gap:2px;flex-wrap:wrap;}
+.nav-tab{padding:6px 11px;border-radius:8px;border:none;cursor:pointer;font-size:12px;font-weight:600;
+  transition:all 0.2s;background:transparent;color:var(--sub);font-family:'Outfit',sans-serif;border-bottom:2px solid transparent;}
+.nav-tab:hover{color:var(--text);background:rgba(255,255,255,0.05);}
+.nav-tab.active{background:rgba(99,102,241,0.2);color:#a5b4fc;border-bottom-color:var(--indigo);}
+.nav-right{display:flex;align-items:center;gap:8px;}
+.user-badge{display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:20px;
+  background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);font-size:13px;color:#a5b4fc;}
+.avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--purple));
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;}
+.btn-logout{padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:rgba(239,68,68,0.1);
+  color:#fca5a5;font-size:12px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;}
+
+main{padding:80px 24px 48px;max-width:1100px;margin:0 auto;position:relative;z-index:1;}
+.section{display:none;animation:fadeIn 0.3s ease;}
+.section.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:20px;backdrop-filter:blur(10px);}
+.card-title{font-size:17px;font-weight:700;margin-bottom:16px;background:linear-gradient(135deg,#93c5fd,#c4b5fd);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+@media(max-width:768px){.grid2,.grid3{grid-template-columns:1fr;}.nav-center{display:none;}}
+textarea,select{background:rgba(0,0,0,0.35);border:1px solid var(--border);border-radius:10px;
+  color:var(--text);padding:11px 14px;font-size:14px;font-family:'Outfit',sans-serif;outline:none;transition:border-color 0.2s;width:100%;}
+textarea:focus,select:focus{border-color:rgba(99,102,241,0.5);}
+textarea{resize:vertical;line-height:1.6;}select{cursor:pointer;}
+label{font-size:13px;color:var(--sub);margin-bottom:5px;display:block;}
+.btn{padding:10px 22px;border-radius:10px;border:none;cursor:pointer;font-size:13px;font-weight:700;
+  font-family:'Outfit',sans-serif;transition:all 0.2s;display:inline-flex;align-items:center;gap:6px;}
+.btn:hover{transform:translateY(-1px);opacity:0.9;}.btn:active{transform:translateY(0);}
+.btn-primary{background:linear-gradient(135deg,var(--blue),var(--indigo));color:#fff;box-shadow:0 4px 16px rgba(99,102,241,0.35);}
+.btn-success{background:linear-gradient(135deg,var(--green),#059669);color:#fff;}
+.btn-purple{background:linear-gradient(135deg,#8b5cf6,var(--purple));color:#fff;}
+.btn-yellow{background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;}
+.btn-ghost{background:rgba(255,255,255,0.07);color:var(--sub);border:1px solid var(--border);}
+.btn-sm{padding:7px 14px;font-size:12px;border-radius:8px;}
+.tag{display:inline-block;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:600;margin:3px;}
+.tag-blue{background:rgba(59,130,246,0.15);color:#93c5fd;border:1px solid rgba(59,130,246,0.3);}
+.tag-green{background:rgba(16,185,129,0.15);color:#6ee7b7;border:1px solid rgba(16,185,129,0.3);}
+.tag-red{background:rgba(239,68,68,0.15);color:#fca5a5;border:1px solid rgba(239,68,68,0.3);}
+.tag-yellow{background:rgba(245,158,11,0.15);color:#fcd34d;border:1px solid rgba(245,158,11,0.3);}
+.tag-purple{background:rgba(168,85,247,0.15);color:#d8b4fe;border:1px solid rgba(168,85,247,0.3);}
+.progress-wrap{margin-bottom:12px;}
+.progress-label{display:flex;justify-content:space-between;margin-bottom:4px;font-size:13px;color:var(--sub);}
+.progress-track{height:8px;border-radius:4px;background:rgba(255,255,255,0.07);overflow:hidden;}
+.progress-fill{height:100%;border-radius:4px;transition:width 1.2s ease;}
+.score-circle{width:88px;height:88px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto;}
+.loader{display:flex;gap:6px;align-items:center;justify-content:center;padding:20px;}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--indigo);animation:bounce 1.2s infinite;}
+.dot:nth-child(2){animation-delay:0.2s;}.dot:nth-child(3){animation-delay:0.4s;}
+@keyframes bounce{0%,80%,100%{transform:scale(0);}40%{transform:scale(1);}}
+.status-bar{padding:11px 14px;border-radius:10px;font-size:13px;margin-top:12px;display:flex;align-items:center;gap:8px;}
+.status-bar.success{background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.25);color:#6ee7b7;}
+.status-bar.error{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:#fca5a5;}
+.status-bar.info{background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.25);color:#a5b4fc;}
+.empty{text-align:center;padding:50px 24px;color:var(--muted);}
+.empty-icon{font-size:48px;margin-bottom:12px;}
+.empty h3{font-size:17px;font-weight:700;color:var(--sub);margin-bottom:6px;}
+.upload-zone{border:2px dashed rgba(99,102,241,0.4);border-radius:14px;padding:36px 24px;text-align:center;
+  cursor:pointer;transition:all 0.3s;background:rgba(99,102,241,0.04);}
+.upload-zone:hover{border-color:var(--indigo);background:rgba(99,102,241,0.1);}
+.file-info{margin-top:12px;padding:11px 14px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);
+  border-radius:10px;display:flex;align-items:center;gap:10px;font-size:13px;color:#6ee7b7;}
+#fileInput{display:none;}
+.chat-box{display:flex;flex-direction:column;gap:12px;max-height:400px;overflow-y:auto;padding:18px;}
+.bubble-wrap{display:flex;flex-direction:column;}
+.bubble-wrap.user{align-items:flex-end;}.bubble-wrap.ai{align-items:flex-start;}
+.bubble-name{font-size:11px;color:var(--muted);margin-bottom:3px;padding:0 4px;}
+.bubble{max-width:80%;padding:11px 15px;font-size:14px;line-height:1.7;white-space:pre-wrap;word-break:break-word;}
+.bubble.user{background:linear-gradient(135deg,var(--blue),var(--indigo));border-radius:16px 16px 4px 16px;color:#fff;}
+.bubble.ai{background:rgba(255,255,255,0.06);border:1px solid var(--border);border-radius:16px 16px 16px 4px;}
+.bullet-row{display:grid;grid-template-columns:1fr 28px 1fr;gap:10px;align-items:center;margin-bottom:10px;}
+.bullet-before{padding:10px 12px;background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.2);border-radius:8px;font-size:13px;color:#fca5a5;}
+.bullet-after{padding:10px 12px;background:rgba(16,185,129,0.07);border:1px solid rgba(16,185,129,0.2);border-radius:8px;font-size:13px;color:#6ee7b7;}
+.flex-row{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;}
+.mt8{margin-top:8px;}.mt12{margin-top:12px;}
+hr{border:none;border-top:1px solid var(--border);margin:16px 0;}
+.chart-wrap{position:relative;height:220px;margin-top:12px;}
+.history-item{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;
+  background:rgba(255,255,255,0.03);border-radius:10px;margin-bottom:8px;border:1px solid var(--border);}
+.job-card{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:12px;padding:16px;
+  margin-bottom:12px;transition:all 0.2s;cursor:pointer;}
+.job-card:hover{border-color:rgba(99,102,241,0.4);background:rgba(99,102,241,0.05);}
+.hero{text-align:center;padding:20px 0 28px;}
+.hero h1{font-size:clamp(24px,4vw,40px);font-weight:900;letter-spacing:-1px;
+  background:linear-gradient(135deg,#60a5fa,#a78bfa,#34d399);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px;}
+.tip-box{padding:10px 12px;background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.2);border-radius:8px;font-size:13px;color:var(--sub);margin-top:10px;}
+</style>
+</head>
+<body>
+<div class="orbs"><div class="orb orb1"></div><div class="orb orb2"></div><div class="orb orb3"></div></div>
+
+<!-- ── AUTH PAGE ── -->
+<div id="authPage">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <div class="auth-logo-icon">S</div>
+        <span class="auth-logo-text">SmartHire AI</span>
+      </div>
+      <div class="auth-tabs">
+        <button class="auth-tab active" onclick="switchTab('login')" id="loginTab">Login</button>
+        <button class="auth-tab" onclick="switchTab('signup')" id="signupTab">Sign Up</button>
+      </div>
+
+      <!-- LOGIN -->
+      <div id="loginForm">
+        <div class="inp-group">
+          <label>Gmail Address</label>
+          <div class="inp-icon">
+            <span class="icon">📧</span>
+            <input type="email" id="loginEmail" placeholder="yourname@gmail.com"/>
+          </div>
+        </div>
+        <div class="inp-group">
+          <label>Password</label>
+          <div class="inp-icon">
+            <span class="icon">🔒</span>
+            <input type="password" id="loginPass" placeholder="Enter your password"/>
+          </div>
+        </div>
+        <div class="forgot-link" onclick="showForgot()">Forgot Password?</div>
+        <button class="auth-btn" onclick="doLogin()">🔐 Login to SmartHire AI</button>
+        <div id="loginMsg"></div>
+        <div class="auth-footer">Don't have an account? <span onclick="switchTab('signup')">Sign Up free</span></div>
+      </div>
+
+      <!-- SIGNUP -->
+      <div id="signupForm" style="display:none">
+        <div class="inp-group">
+          <label>Full Name</label>
+          <div class="inp-icon"><span class="icon">👤</span>
+            <input type="text" id="signupName" placeholder="John Smith"/></div>
+        </div>
+        <div class="inp-group">
+          <label>Gmail Address</label>
+          <div class="inp-icon"><span class="icon">📧</span>
+            <input type="email" id="signupEmail" placeholder="yourname@gmail.com"/></div>
+        </div>
+        <div class="inp-group">
+          <label>Password</label>
+          <div class="inp-icon"><span class="icon">🔒</span>
+            <input type="password" id="signupPass" placeholder="Create a strong password"/></div>
+        </div>
+        <div class="inp-group">
+          <label>Confirm Password</label>
+          <div class="inp-icon"><span class="icon">✅</span>
+            <input type="password" id="signupConfirm" placeholder="Re-enter your password"/></div>
+        </div>
+        <button class="auth-btn" onclick="doSignup()">🚀 Create Free Account</button>
+        <div id="signupMsg"></div>
+        <div class="auth-footer">Already have an account? <span onclick="switchTab('login')">Login</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── FORGOT PASSWORD MODAL ── -->
+<div class="modal-overlay" id="forgotModal">
+  <div class="modal-box">
+
+    <!-- Step 1: Enter email -->
+    <div id="forgotStep1">
+      <div class="modal-title">🔑 Reset Password</div>
+      <div class="modal-sub">Enter your registered Gmail address</div>
+      <div class="inp-group">
+        <label>Gmail Address</label>
+        <div class="inp-icon"><span class="icon">📧</span>
+          <input type="email" id="forgotEmail" placeholder="yourname@gmail.com"/></div>
+      </div>
+      <button class="auth-btn" onclick="doForgotStep1()" style="margin-bottom:12px">Next →</button>
+      <div id="forgotMsg1"></div>
+      <div style="text-align:center;margin-top:12px;font-size:13px;color:var(--blue);cursor:pointer" onclick="closeForgot()">← Back to Login</div>
+    </div>
+
+    <!-- Step 2: Set new password -->
+    <div id="forgotStep2" style="display:none">
+      <div class="modal-title">🔒 Set New Password</div>
+      <div class="modal-sub" id="forgotStep2Sub">Create a new password for your account</div>
+      <div class="inp-group">
+        <label>New Password</label>
+        <div class="inp-icon"><span class="icon">🔒</span>
+          <input type="password" id="newPass" placeholder="Enter new password (min 6 chars)"/></div>
+      </div>
+      <div class="inp-group">
+        <label>Confirm New Password</label>
+        <div class="inp-icon"><span class="icon">✅</span>
+          <input type="password" id="confirmNewPass" placeholder="Re-enter new password"/></div>
+      </div>
+      <button class="auth-btn" onclick="doForgotStep2()" style="margin-bottom:12px">✅ Update Password</button>
+      <div id="forgotMsg2"></div>
+      <div style="text-align:center;margin-top:12px;font-size:13px;color:var(--blue);cursor:pointer" onclick="backToStep1()">← Back</div>
+    </div>
+
+    <!-- Step 3: Success -->
+    <div id="forgotStep3" style="display:none;text-align:center;padding:10px 0">
+      <div style="font-size:48px;margin-bottom:14px">✅</div>
+      <div class="modal-title" style="margin-bottom:8px">Password Updated!</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:20px">Your password has been changed successfully. You can now login with your new password.</div>
+      <button class="auth-btn" onclick="closeForgot();switchTab('login')">🔐 Go to Login</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── MAIN APP ── -->
+<div id="mainApp">
+<nav>
+  <div class="logo" onclick="showTab('analyzer')">
+    <div class="logo-icon">S</div>
+    <span class="logo-text">SmartHire AI</span>
+  </div>
+  <div class="nav-center">
+    <button class="nav-tab active" onclick="showTab('analyzer')"    id="tab-analyzer">📄 Analyzer</button>
+    <button class="nav-tab"        onclick="showTab('ats')"         id="tab-ats">🎯 ATS</button>
+    <button class="nav-tab"        onclick="showTab('roles')"       id="tab-roles">💼 Roles</button>
+    <button class="nav-tab"        onclick="showTab('gap')"         id="tab-gap">📊 Gap</button>
+    <button class="nav-tab"        onclick="showTab('roadmap')"     id="tab-roadmap">🗺️ Roadmap</button>
+    <button class="nav-tab"        onclick="showTab('interview')"   id="tab-interview">🤖 Interview</button>
+    <button class="nav-tab"        onclick="showTab('enhance')"     id="tab-enhance">✨ Enhancer</button>
+    <button class="nav-tab"        onclick="showTab('history')"     id="tab-history">📈 History</button>
+    <button class="nav-tab"        onclick="showTab('linkedin')"    id="tab-linkedin">🔗 LinkedIn</button>
+    <button class="nav-tab"        onclick="showTab('coverletter')" id="tab-coverletter">📝 Cover Letter</button>
+    <button class="nav-tab"        onclick="showTab('jobs')"        id="tab-jobs">💼 Jobs</button>
+  </div>
+  <div class="nav-right">
+    <div class="user-badge" id="userBadge">
+      <div class="avatar" id="userAvatar">J</div>
+      <span id="userName">User</span>
+    </div>
+    <button class="btn-logout" onclick="logout()">Logout</button>
+  </div>
+</nav>
+
+<main>
+<!-- ANALYZER -->
+<section class="section active" id="sec-analyzer">
+  <div class="hero">
+    <h1>AI Career Copilot</h1>
+    <p>Upload your resume PDF → instant AI-powered career analysis</p>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <div class="card-title">📄 Upload Resume (PDF / DOCX)</div>
+      <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()"
+        ondragover="event.preventDefault();this.style.borderColor='var(--indigo)'"
+        ondragleave="this.style.borderColor=''"
+        ondrop="handleDrop(event)">
+        <div style="font-size:40px;margin-bottom:10px">📁</div>
+        <div style="font-size:15px;font-weight:700;margin-bottom:6px">Click to upload or drag & drop</div>
+        <div style="font-size:13px;color:var(--muted)">Supports PDF and DOCX (max 16MB)</div>
+      </div>
+      <input type="file" id="fileInput" accept=".pdf,.docx,.doc" onchange="handleFileSelect(event)"/>
+      <div id="fileInfo" style="display:none" class="file-info"><span>📋</span><span id="fileName"></span></div>
+      <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="analyzeResume()">🔍 Analyze Resume</button>
+        <button class="btn btn-ghost"   onclick="clearAll()">Clear</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">📋 Job Description (Optional)</div>
+      <textarea id="jdText" rows="7" placeholder="Paste job description for keyword matching and ATS optimization..."></textarea>
+      <div id="analyzeStatus"></div>
+    </div>
+  </div>
+  <div id="analyzeLoader" style="display:none" class="card">
+    <div class="loader"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+    <div style="text-align:center;color:var(--muted);font-size:14px;padding-bottom:8px">Analyzing your resume...</div>
+  </div>
+  <div id="analyzeResults" style="display:none">
+    <div class="grid3" id="statCards" style="margin-bottom:20px"></div>
+    <div class="card" id="skillsCard"></div>
+  </div>
+  <div id="analyzeEmpty" class="card">
+    <div class="empty"><div class="empty-icon">🚀</div><h3>Your AI Career Copilot Awaits</h3>
+      <p>Upload your resume PDF above to unlock all 11 AI-powered features.</p></div>
+  </div>
+</section>
+
+<!-- ATS -->
+<section class="section" id="sec-ats">
+  <div class="card">
+    <div class="card-title">🎯 ATS Score Calculator</div>
+    <div class="flex-row">
+      <textarea id="atsJD" rows="3" style="flex:1" placeholder="Paste job description for keyword matching (optional)..."></textarea>
+      <button class="btn btn-primary" onclick="calcATS()" style="align-self:center">Calculate ATS</button>
+    </div>
+  </div>
+  <div id="atsLoader" style="display:none" class="card"><div class="loader"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>
+  <div id="atsResults" style="display:none"></div>
+  <div id="atsEmpty" class="card"><div class="empty"><div class="empty-icon">🎯</div><h3>No resume uploaded</h3><p>Go to Analyzer tab and upload your resume first.</p></div></div>
+</section>
+
+<!-- ROLES -->
+<section class="section" id="sec-roles">
+  <div class="card"><div class="card-title">💼 AI Job Role Predictions</div>
+    <p style="color:var(--muted);font-size:13px">Ranked by ML compatibility across 9 job roles.</p></div>
+  <div id="rolesResults"></div>
+  <div id="rolesEmpty" class="card"><div class="empty"><div class="empty-icon">💼</div><h3>No resume uploaded</h3><p>Go to Analyzer tab and upload your resume first.</p></div></div>
+</section>
+
+<!-- GAP -->
+<section class="section" id="sec-gap">
+  <div class="card">
+    <div class="card-title">📊 Skill Gap Analysis</div>
+    <div class="flex-row">
+      <select id="gapRole" style="flex:1">
+        <option value="">Auto-detect best role</option>
+        <option>Frontend Developer</option><option>Backend Developer</option>
+        <option>Full Stack Developer</option><option>Data Analyst</option>
+        <option>Data Scientist</option><option>AI/ML Engineer</option>
+        <option>DevOps Engineer</option><option>Python Developer</option>
+        <option>Cloud Engineer</option><option>Mobile Developer</option>
+        <option>Cybersecurity Analyst</option><option>Database Administrator</option>
+      </select>
+      <button class="btn btn-primary" onclick="analyzeGap()">Analyze Gap</button>
+    </div>
+  </div>
+  <div id="gapLoader" style="display:none" class="card"><div class="loader"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>
+  <div id="gapResults" style="display:none"></div>
+  <div id="gapEmpty" class="card"><div class="empty"><div class="empty-icon">📊</div><h3>No resume uploaded</h3><p>Go to Analyzer tab and upload your resume first.</p></div></div>
+</section>
+
+<!-- ROADMAP -->
+<section class="section" id="sec-roadmap">
+  <div class="card">
+    <div class="card-title">🗺️ Career Roadmap Generator</div>
+    <div class="flex-row">
+      <select id="roadmapRole" style="flex:1">
+        <option value="">Select target role</option>
+        <option>Frontend Developer</option><option>Backend Developer</option>
+        <option>Full Stack Developer</option><option>Data Analyst</option>
+        <option>Data Scientist</option><option>AI/ML Engineer</option>
+        <option>DevOps Engineer</option><option>Python Developer</option>
+        <option>Cloud Engineer</option><option>Mobile Developer</option>
+        <option>Cybersecurity Analyst</option><option>Database Administrator</option>
+      </select>
+      <select id="roadmapLevel">
+        <option value="beginner">Beginner</option>
+        <option value="intermediate">Intermediate</option>
+        <option value="advanced">Advanced</option>
+      </select>
+      <button class="btn btn-purple" onclick="generateRoadmap()">✨ Generate</button>
+    </div>
+  </div>
+  <div id="roadmapLoader" style="display:none" class="card">
+    <div class="loader"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+    <div style="text-align:center;color:var(--muted);font-size:14px;padding-bottom:8px">Generating your roadmap...</div>
+  </div>
+  <div id="roadmapResults"></div>
+</section>
+
+<!-- INTERVIEW -->
+<section class="section" id="sec-interview">
+  <div class="card">
+    <div class="card-title">🤖 AI Interview Simulator</div>
+    <div class="flex-row">
+      <select id="interviewRole" style="flex:1">
+        <option>General HR</option><option>Frontend Developer</option>
+        <option>Backend Developer</option><option>Full Stack Developer</option>
+        <option>Data Science</option><option>Data Analyst</option>
+        <option>Python Developer</option><option>DevOps Engineer</option><option>AI/ML Engineer</option>
+      </select>
+      <button class="btn btn-success" onclick="startInterview()">▶️ Start</button>
+      <button class="btn btn-ghost"   onclick="resetInterview()">🔄 Reset</button>
+    </div>
+    <div id="interviewStats" style="display:none;margin-top:12px;font-size:13px;color:var(--muted)"></div>
+  </div>
+  <div id="interviewEmpty" class="card"><div class="empty"><div class="empty-icon">🎤</div><h3>Practice Like It's Real</h3><p>Select a role and click Start to begin your AI mock interview.</p></div></div>
+  <div id="interviewBox" style="display:none">
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="padding:12px 18px;border-bottom:1px solid var(--border);font-size:13px;color:var(--muted);display:flex;align-items:center;gap:8px">
+        <span id="sessionDot" style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block"></span>
+        <span id="sessionLabel">Interview Session</span>
+      </div>
+      <div class="chat-box" id="chatMessages"></div>
+      <div style="padding:12px 18px;border-top:1px solid var(--border);display:flex;gap:10px">
+        <textarea id="answerInput" rows="3" placeholder="Type your answer... (Enter to send)" style="flex:1"></textarea>
+        <button class="btn btn-primary" onclick="submitAnswer()" style="align-self:flex-end">Send</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ENHANCE -->
+<section class="section" id="sec-enhance">
+  <div class="card">
+    <div class="card-title">✨ AI Resume Enhancer + ATS Optimizer</div>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:16px">
+      Paste your <strong style="color:var(--text)">complete resume</strong> — it will be fully rewritten into an ATS-optimized professional resume and downloaded as a text file.
+    </p>
+
+    <!-- Tabs -->
+    <div style="display:flex;gap:0;margin-bottom:18px;border-radius:10px;overflow:hidden;border:1px solid var(--border);width:fit-content">
+      <button id="enhTab1" onclick="switchEnhTab(1)"
+        style="padding:9px 20px;border:none;cursor:pointer;font-size:13px;font-weight:700;font-family:'Outfit',sans-serif;
+        background:rgba(99,102,241,0.25);color:#a5b4fc;transition:all 0.2s">
+        📄 Full Resume
+      </button>
+      <button id="enhTab2" onclick="switchEnhTab(2)"
+        style="padding:9px 20px;border:none;cursor:pointer;font-size:13px;font-weight:700;font-family:'Outfit',sans-serif;
+        background:transparent;color:var(--sub);transition:all 0.2s">
+        🔫 Bullet Points Only
+      </button>
+    </div>
+
+    <!-- Full resume mode -->
+    <div id="enhMode1">
+      <div class="grid2" style="margin-bottom:14px">
+        <div>
+          <label>Target Job Role</label>
+          <select id="enhRole" style="margin-bottom:12px">
+            <option value="">Select target role (optional)</option>
+            <option>Frontend Developer</option><option>Backend Developer</option>
+            <option>Full Stack Developer</option><option>Data Analyst</option>
+            <option>Data Scientist</option><option>AI/ML Engineer</option>
+            <option>DevOps Engineer</option><option>Python Developer</option>
+            <option>Software Engineer</option>
+          </select>
+          <label>Download Format</label>
+          <select id="enhFormat">
+            <option value="txt">Plain Text (.txt)</option>
+            <option value="html">Formatted HTML (.html)</option>
+          </select>
+        </div>
+        <div>
+          <label>Target Job Description (Optional)</label>
+          <textarea id="enhJD" rows="4" placeholder="Paste job description for keyword optimization..."></textarea>
+        </div>
+      </div>
+      <label>Paste Your Complete Resume</label>
+      <textarea id="fullResumeInput" rows="12" placeholder="Paste your complete resume text here...&#10;&#10;Include all sections: Contact, Summary, Skills, Experience, Education, Projects, Certifications"></textarea>
+      <div class="flex-row mt12">
+        <button class="btn btn-purple" onclick="enhanceFullResume()">✨ Optimize Full Resume</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('fullResumeInput').value='';hide('enhanceResults')">Clear</button>
+      </div>
+    </div>
+
+    <!-- Bullet only mode -->
+    <div id="enhMode2" style="display:none">
+      <label>Paste Resume Bullet Points</label>
+      <textarea id="bulletInput" rows="7" placeholder="- Worked on website features&#10;- Did data analysis tasks&#10;- Helped team with coding"></textarea>
+      <div class="flex-row mt12">
+        <button class="btn btn-purple" onclick="enhanceResume()">✨ Enhance Bullets</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('bulletInput').value='';hide('enhanceResults')">Clear</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="enhanceLoader" style="display:none" class="card">
+    <div class="loader"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+    <div style="text-align:center;color:var(--muted);font-size:14px;padding-bottom:8px">AI is optimizing your resume for ATS...</div>
+  </div>
+  <div id="enhanceResults" style="display:none"></div>
+  <div class="card"><div class="card-title">📝 Before & After Examples</div><div id="examples"></div></div>
+</section>
+
+<!-- HISTORY -->
+<section class="section" id="sec-history">
+  <div class="card"><div class="card-title">📈 ATS Score History & Progress</div>
+    <p style="color:var(--muted);font-size:13px">Every resume you upload is saved here automatically.</p></div>
+  <div class="grid2">
+    <div class="card"><div class="card-title">📊 Score Progress Chart</div><div class="chart-wrap"><canvas id="historyChart"></canvas></div></div>
+    <div class="card"><div class="card-title">🏆 Best Scores</div><div id="bestScores"></div></div>
+  </div>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div class="card-title" style="margin-bottom:0">📋 All Resume Scans</div>
+      <button class="btn btn-ghost btn-sm" onclick="clearHistory()">🗑️ Clear</button>
+    </div>
+    <div id="historyList"></div>
+  </div>
+</section>
+
+<!-- LINKEDIN -->
+<section class="section" id="sec-linkedin">
+
+  <!-- URL Info Banner -->
+  <div class="card" style="background:linear-gradient(135deg,rgba(59,130,246,0.08),rgba(99,102,241,0.08));border-color:rgba(99,102,241,0.25)">
+    <div style="display:flex;gap:14px;align-items:flex-start">
+      <span style="font-size:28px">🔗</span>
+      <div>
+        <div style="font-size:15px;font-weight:700;margin-bottom:6px">Enter Your LinkedIn Profile URL</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.7">
+          LinkedIn blocks direct URL access from browsers for privacy reasons — even paid tools cannot scrape it.<br>
+          <strong style="color:#a5b4fc">Simple fix:</strong> Enter your URL below, then follow the 3 steps to copy your profile text. Takes only 30 seconds!
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <input type="url" id="linkedinURL" placeholder="https://www.linkedin.com/in/yourname"
+        style="flex:1;background:rgba(0,0,0,0.35);border:1px solid rgba(99,102,241,0.4);border-radius:10px;
+        color:var(--text);padding:11px 14px;font-size:14px;font-family:'Outfit',sans-serif;outline:none;min-width:260px"/>
+      <button class="btn btn-primary" onclick="openLinkedIn()">🌐 Open My Profile</button>
+    </div>
+  </div>
+
+  <!-- Step by step guide -->
+  <div class="card">
+    <div class="card-title">📋 How to Copy Your LinkedIn Profile (30 seconds)</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+      ${[
+        ['1','🌐','Open Profile','Click "Open My Profile" above or go to your LinkedIn profile page'],
+        ['2','📋','Select All Text','Press Ctrl+A (Windows) or Cmd+A (Mac) to select all text on the page'],
+        ['3','📥','Copy & Paste','Press Ctrl+C to copy, then paste it in the box below'],
+      ].map(([n,i,t,d])=>`<div style="padding:14px;background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.2);border-radius:12px;text-align:center">
+        <div style="width:28px;height:28px;border-radius:50%;background:var(--indigo);color:#fff;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;margin:0 auto 8px">${n}</div>
+        <div style="font-size:20px;margin-bottom:6px">${i}</div>
+        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">${t}</div>
+        <div style="font-size:12px;color:var(--muted)">${d}</div>
+      </div>`).join('')}
+    </div>
+  </div>
+
+  <!-- Paste area -->
+  <div class="card">
+    <div class="card-title">📄 Paste Your LinkedIn Profile Text Here</div>
+    <textarea id="linkedinText" rows="9" placeholder="After copying your LinkedIn profile page (Ctrl+A → Ctrl+C), paste it here (Ctrl+V)...&#10;&#10;The more text you include the better the analysis!"></textarea>
+    <div class="flex-row mt12">
+      <button class="btn btn-primary" onclick="analyzeLinkedIn()">🔍 Analyze Profile</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('linkedinText').value='';document.getElementById('linkedinResults').style.display='none'">Clear</button>
+    </div>
+  </div>
+
+  <div id="linkedinLoader" style="display:none" class="card"><div class="loader"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>
+  <div id="linkedinResults" style="display:none"></div>
+  <div class="card">
+    <div class="card-title">💡 LinkedIn Optimization Checklist</div>
+    <div class="grid2" id="linkedinChecklist"></div>
+  </div>
+</section>
+
+<!-- COVER LETTER -->
+<section class="section" id="sec-coverletter">
+  <div class="card">
+    <div class="card-title">📝 AI Cover Letter Generator</div>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:16px">Generate a professional tailored cover letter in seconds.</p>
+    <div class="grid2">
+      <div>
+        <div class="inp-group" style="margin-bottom:12px"><label>Your Full Name</label>
+          <input type="text" id="clName" placeholder="John Smith" style="background:rgba(0,0,0,0.35);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:11px 14px;font-size:14px;font-family:'Outfit',sans-serif;outline:none;width:100%"/></div>
+        <div class="inp-group" style="margin-bottom:12px"><label>Company Name</label>
+          <input type="text" id="clCompany" placeholder="Google, TCS, Infosys..." style="background:rgba(0,0,0,0.35);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:11px 14px;font-size:14px;font-family:'Outfit',sans-serif;outline:none;width:100%"/></div>
+        <div class="inp-group" style="margin-bottom:12px"><label>Job Title</label>
+          <input type="text" id="clTitle" placeholder="Software Engineer, Data Analyst..." style="background:rgba(0,0,0,0.35);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:11px 14px;font-size:14px;font-family:'Outfit',sans-serif;outline:none;width:100%"/></div>
+        <div class="inp-group" style="margin-bottom:14px"><label>Tone</label>
+          <select id="clTone">
+            <option value="professional">Professional & Formal</option>
+            <option value="enthusiastic">Enthusiastic & Energetic</option>
+            <option value="concise">Concise & Direct</option>
+            <option value="creative">Creative & Unique</option>
+          </select></div>
+        <button class="btn btn-yellow" onclick="generateCoverLetter()" style="width:100%">✍️ Generate Cover Letter</button>
+      </div>
+      <div><label>Job Description (for personalization)</label>
+        <textarea id="clJD" rows="10" placeholder="Paste the job description here for a more tailored cover letter..."></textarea></div>
+    </div>
+  </div>
+  <div id="clLoader" style="display:none" class="card">
+    <div class="loader"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+    <div style="text-align:center;color:var(--muted);font-size:14px;padding-bottom:8px">Writing your cover letter...</div>
+  </div>
+  <div id="clResults" style="display:none"></div>
+</section>
+
+<!-- JOBS -->
+<section class="section" id="sec-jobs">
+  <div class="card">
+    <div class="card-title">💼 Matching Job Listings</div>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:14px">Real job listings matched to your skills and predicted role.</p>
+    <div class="flex-row">
+      <select id="jobRole" style="flex:1">
+        <option value="">Select Role</option>
+        <option>Frontend Developer</option><option>Backend Developer</option>
+        <option>Full Stack Developer</option><option>Data Analyst</option>
+        <option>Data Scientist</option><option>AI/ML Engineer</option>
+        <option>DevOps Engineer</option><option>Python Developer</option>
+        <option>Software Engineer</option>
+      </select>
+      <select id="jobLocation">
+        <option value="India">India</option><option value="Remote">Remote</option>
+        <option value="USA">USA</option><option value="UK">UK</option>
+      </select>
+      <select id="jobExp">
+        <option value="fresher">Fresher 0-1 yr</option>
+        <option value="junior">Junior 1-3 yrs</option>
+        <option value="mid">Mid 3-5 yrs</option>
+        <option value="senior">Senior 5+ yrs</option>
+      </select>
+      <button class="btn btn-primary" onclick="findJobs()">🔍 Find Jobs</button>
+    </div>
+  </div>
+  <div id="jobsLoader" style="display:none" class="card"><div class="loader"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>
+  <div id="jobsResults"></div>
+  <div id="jobsEmpty" class="card"><div class="empty"><div class="empty-icon">💼</div><h3>Find Your Dream Job</h3><p>Select a role and click Find Jobs to see matching opportunities.</p></div></div>
+</section>
+</main>
+</div><!-- end mainApp -->
+
+<script>
+const API = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost' ? 'http://127.0.0.1:5000' : window.location.origin;
+let resumeData=null,uploadedFile=null;
+let sessionId=null,questions=[],qIndex=0,scores=[];
+let currentUser=null;
+let scoreHistory=[];
+let historyChartObj=null;
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function $(id){return document.getElementById(id);}
+function show(id){const e=$(id);if(e)e.style.display='';}
+function hide(id){const e=$(id);if(e)e.style.display='none';}
+function block(id){const e=$(id);if(e)e.style.display='block';}
+function sc(s){return s>=80?'#10b981':s>=60?'#f59e0b':'#ef4444';}
+function tag(t,c){return `<span class="tag ${c}">${t}</span>`;}
+function pb(label,val,color){
+  return `<div class="progress-wrap">
+    <div class="progress-label"><span>${label}</span><span style="color:${color};font-weight:700">${val}%</span></div>
+    <div class="progress-track"><div class="progress-fill" style="width:${val}%;background:linear-gradient(90deg,${color},${color}aa)"></div></div>
+  </div>`;}
+function circle(score){
+  const c=sc(score);
+  return `<div class="score-circle" style="border:4px solid ${c};background:${c}11;box-shadow:0 0 20px ${c}33">
+    <span style="font-size:24px;font-weight:900;color:${c};line-height:1">${score}</span>
+    <span style="font-size:10px;color:var(--muted);margin-top:2px">/ 100</span></div>`;}
+
+// ── AUTH ──────────────────────────────────────────────────────────────────────
+function switchTab(tab){
+  $('loginForm').style.display=tab==='login'?'block':'none';
+  $('signupForm').style.display=tab==='signup'?'block':'none';
+  $('loginTab').classList.toggle('active',tab==='login');
+  $('signupTab').classList.toggle('active',tab==='signup');
+}
+
+function getUsers(){return JSON.parse(localStorage.getItem('sh_users')||'{}');}
+function saveUsers(u){localStorage.setItem('sh_users',JSON.stringify(u));}
+
+function doLogin(){
+  const email=$('loginEmail').value.trim();
+  const pass=$('loginPass').value.trim();
+  if(!email||!pass){showMsg('loginMsg','Please fill all fields','error');return;}
+  if(!email.includes('@')){showMsg('loginMsg','Please enter a valid Gmail address','error');return;}
+  const users=getUsers();
+  if(!users[email]){showMsg('loginMsg','Account not found. Please sign up first.','error');return;}
+  if(users[email].pass!==pass){showMsg('loginMsg','Wrong password. Please try again.','error');return;}
+  loginSuccess({name:users[email].name,email,gmail:email});
+}
+
+function doSignup(){
+  const name=$('signupName').value.trim();
+  const email=$('signupEmail').value.trim();
+  const pass=$('signupPass').value.trim();
+  const confirm=$('signupConfirm').value.trim();
+  if(!name||!email||!pass||!confirm){showMsg('signupMsg','Please fill all fields','error');return;}
+  if(!email.includes('@')){showMsg('signupMsg','Please enter a valid Gmail address','error');return;}
+  if(pass.length<6){showMsg('signupMsg','Password must be at least 6 characters','error');return;}
+  if(pass!==confirm){showMsg('signupMsg','Passwords do not match','error');return;}
+  const users=getUsers();
+  if(users[email]){showMsg('signupMsg','This Gmail is already registered. Please login.','error');return;}
+  users[email]={name,pass};
+  saveUsers(users);
+  showMsg('signupMsg','Account created! Logging you in...','success');
+  setTimeout(()=>loginSuccess({name,email,gmail:email}),1000);
+}
+
+
+
+
+function loginSuccess(user){
+  currentUser=user;
+  localStorage.setItem('sh_current',JSON.stringify(user));
+  scoreHistory=JSON.parse(localStorage.getItem('sh_history_'+user.email)||'[]');
+  $('authPage').style.display='none';
+  $('mainApp').style.display='block';
+  $('userName').textContent=user.name.split(' ')[0];
+  $('userAvatar').textContent=user.name[0].toUpperCase();
+}
+
+function logout(){
+  currentUser=null;
+  localStorage.removeItem('sh_current');
+  $('mainApp').style.display='none';
+  $('authPage').style.display='flex';
+  $('loginEmail').value='';$('loginPass').value='';
+  showMsg('loginMsg','','');
+}
+
+function showMsg(id,msg,type){
+  const el=$(id);if(!el)return;
+  el.innerHTML=msg?`<div class="auth-msg ${type}">${msg}</div>`:'';
+}
+
+function showForgot(){
+  // Reset to step 1 every time
+  $('forgotStep1').style.display='block';
+  $('forgotStep2').style.display='none';
+  $('forgotStep3').style.display='none';
+  $('forgotEmail').value='';
+  $('newPass').value='';
+  $('confirmNewPass').value='';
+  $('forgotMsg1').innerHTML='';
+  $('forgotMsg2').innerHTML='';
+  $('forgotModal').classList.add('show');
+}
+
+function closeForgot(){
+  $('forgotModal').classList.remove('show');
+}
+
+function backToStep1(){
+  $('forgotStep1').style.display='block';
+  $('forgotStep2').style.display='none';
+  $('forgotMsg1').innerHTML='';
+}
+
+function doForgotStep1(){
+  const email=$('forgotEmail').value.trim();
+  if(!email){
+    $('forgotMsg1').innerHTML='<div class="auth-msg error">Please enter your Gmail address</div>';
+    return;
+  }
+  if(!email.includes('@')){
+    $('forgotMsg1').innerHTML='<div class="auth-msg error">Please enter a valid Gmail address</div>';
+    return;
+  }
+  const users=getUsers();
+  if(!users[email]){
+    $('forgotMsg1').innerHTML='<div class="auth-msg error">❌ This Gmail is not registered. Please sign up first.</div>';
+    return;
+  }
+  // Email found — go to step 2
+  $('forgotStep2Sub').textContent=`Set new password for ${email}`;
+  $('forgotStep1').style.display='none';
+  $('forgotStep2').style.display='block';
+  $('forgotMsg1').innerHTML='';
+}
+
+function doForgotStep2(){
+  const email=$('forgotEmail').value.trim();
+  const newPass=$('newPass').value.trim();
+  const confirmPass=$('confirmNewPass').value.trim();
+
+  if(!newPass||!confirmPass){
+    $('forgotMsg2').innerHTML='<div class="auth-msg error">Please fill both password fields</div>';
+    return;
+  }
+  if(newPass.length<6){
+    $('forgotMsg2').innerHTML='<div class="auth-msg error">Password must be at least 6 characters</div>';
+    return;
+  }
+  if(newPass!==confirmPass){
+    $('forgotMsg2').innerHTML='<div class="auth-msg error">❌ Passwords do not match. Please try again.</div>';
+    return;
+  }
+
+  // Update password in storage
+  const users=getUsers();
+  if(!users[email]){
+    $('forgotMsg2').innerHTML='<div class="auth-msg error">Account not found. Please sign up.</div>';
+    return;
+  }
+  users[email].pass=newPass;
+  saveUsers(users);
+
+  // If user is currently logged in with this email, update session
+  if(currentUser&&currentUser.email===email){
+    localStorage.removeItem('sh_current');
+    currentUser=null;
+  }
+
+  // Show success step
+  $('forgotStep2').style.display='none';
+  $('forgotStep3').style.display='block';
+}
+
+// Check existing session
+const saved=localStorage.getItem('sh_current');
+if(saved){
+  try{loginSuccess(JSON.parse(saved));}catch(e){localStorage.removeItem('sh_current');}
+}
+
+// ── TAB SWITCHING ─────────────────────────────────────────────────────────────
+function showTab(name){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  $('sec-'+name).classList.add('active');
+  $('tab-'+name).classList.add('active');
+  if(name==='history')renderHistory();
+}
+
+// ── FILE UPLOAD ───────────────────────────────────────────────────────────────
+function handleFileSelect(e){const f=e.target.files[0];if(f)setFile(f);}
+function handleDrop(e){e.preventDefault();const f=e.dataTransfer.files[0];if(f)setFile(f);}
+function setFile(file){
+  if(!file.name.match(/\.(pdf|docx|doc)$/i)){alert('Please upload PDF or DOCX only!');return;}
+  uploadedFile=file;
+  $('fileName').textContent=`${file.name} (${(file.size/1024).toFixed(1)} KB)`;
+  $('fileInfo').style.display='flex';
+  $('uploadZone').style.borderColor='var(--green)';
+}
+
+// ── ANALYZE RESUME ────────────────────────────────────────────────────────────
+async function analyzeResume(){
+  if(!uploadedFile){alert('Please upload a PDF or DOCX resume first!');return;}
+  hide('analyzeEmpty');hide('analyzeResults');block('analyzeLoader');
+  $('analyzeStatus').innerHTML='';
+  try{
+    const fd=new FormData();fd.append('file',uploadedFile);
+    const res=await fetch(`${API}/api/resume/upload`,{method:'POST',body:fd});
+    const data=await res.json();
+    if(data.error)throw new Error(data.error);
+    resumeData=data;
+    saveHistory(uploadedFile.name,data.ats_score?.overall||0,data.skills||[]);
+    $('analyzeStatus').innerHTML=`<div class="status-bar success">✅ Analysis complete — ${data.skills?.length||0} skills detected from ${uploadedFile.name}</div>`;
+    const ats=data.ats_score?.overall||0;
+    const roles=data.predicted_roles||[];
+    const skills=data.skills||[];
+    $('statCards').innerHTML=[
+      {icon:'🎯',val:ats+'%',title:'ATS Score',sub:'Applicant Tracking',color:sc(ats),tab:'ats'},
+      {icon:'⚡',val:skills.length,title:'Skills Found',sub:'Tech & soft skills',color:'#3b82f6',tab:'gap'},
+      {icon:'💼',val:(roles[0]?.match_percent||0)+'%',title:'Top Role Match',sub:roles[0]?.role||'—',color:'#10b981',tab:'roles'},
+    ].map(s=>`<div class="card" style="text-align:center;cursor:pointer;transition:all 0.2s;margin-bottom:0" onclick="showTab('${s.tab}')"
+        onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform=''">
+      <div style="font-size:26px;margin-bottom:6px">${s.icon}</div>
+      <div style="font-size:26px;font-weight:900;color:${s.color}">${s.val}</div>
+      <div style="font-size:13px;font-weight:600;margin-top:4px">${s.title}</div>
+      <div style="font-size:11px;color:var(--muted)">${s.sub}</div></div>`).join('');
+    $('skillsCard').innerHTML=`<div class="card-title">⚡ Detected Skills (${skills.length})</div>
+      <div>${skills.slice(0,20).map(s=>tag(s,'tag-blue')).join('')}
+        ${skills.length>20?tag('+'+(skills.length-20)+' more','tag-purple'):''}</div>`;
+    hide('analyzeLoader');block('analyzeResults');
+    renderRoles(roles);
+  }catch(e){
+    hide('analyzeLoader');
+    $('analyzeStatus').innerHTML=`<div class="status-bar error">❌ ${e.message||'Cannot connect to backend. Make sure Flask is running on port 5000.'}</div>`;
+    block('analyzeEmpty');
+  }
+}
+
+function clearAll(){
+  uploadedFile=null;$('fileInput').value='';
+  $('fileInfo').style.display='none';$('uploadZone').style.borderColor='';
+  resumeData=null;hide('analyzeResults');$('analyzeStatus').innerHTML='';
+  block('analyzeEmpty');$('rolesResults').innerHTML='';block('rolesEmpty');
+}
+
+// ── ATS ───────────────────────────────────────────────────────────────────────
+async function calcATS(){
+  if(!resumeData){alert('Upload resume in Analyzer tab first!');return;}
+  const jd=$('atsJD').value.trim();
+  hide('atsEmpty');hide('atsResults');block('atsLoader');
+  try{
+    const fd=new FormData();fd.append('file',uploadedFile);
+    const res=await fetch(`${API}/api/resume/upload`,{method:'POST',body:fd});
+    const data=await res.json();
+    const ats=data.ats_score;const cats=ats.categories;const overall=ats.overall;
+    const cc=['#3b82f6','#10b981','#f59e0b','#a855f7','#ef4444','#06b6d4'];
+    let mkw='';
+    if(jd&&data.skills){
+      const rsW=new Set(data.skills.map(s=>s.toLowerCase()));
+      const stop=new Set(['the','and','for','with','that','this','from','have','will','your','they','been','were']);
+      const missing=[...new Set((jd.toLowerCase().match(/\b[a-z]{4,}\b/g)||[]))].filter(k=>!rsW.has(k)&&!stop.has(k)).slice(0,20);
+      if(missing.length)mkw=`<div class="card"><div class="card-title">🔍 Missing Keywords</div>
+        <div>${missing.map(k=>tag(k,'tag-red')).join('')}</div>
+        <div class="tip-box">💡 Add these keywords naturally in your Skills or Experience sections.</div></div>`;
+    }
+    $('atsResults').innerHTML=`
+      <div class="grid2">
+        <div class="card" style="display:flex;align-items:center;gap:20px">
+          <div style="flex-shrink:0">${circle(overall)}</div>
+          <div><div style="font-size:19px;font-weight:800;margin-bottom:6px">Overall ATS Score</div>
+            <div style="font-size:13px;color:var(--muted)">${overall>=80?'🟢 Excellent — likely to pass ATS':overall>=60?'🟡 Good — minor improvements needed':'🔴 Needs work — may get auto-rejected'}</div>
+          </div>
+        </div>
+        <div class="card"><div style="font-size:13px;font-weight:700;color:var(--sub);margin-bottom:12px">Score Breakdown</div>
+          ${Object.entries(cats).map(([k,v],i)=>pb(k,v,cc[i])).join('')}</div>
+      </div>${mkw}
+      <div class="card"><div class="card-title">📋 ATS Tips</div>
+        <div class="grid2">${[['📝','Use standard headers: Skills, Experience, Education, Projects'],
+          ['🔤','Avoid tables — ATS cannot parse them'],
+          ['🎯','Mirror exact keywords from the job description'],
+          ['📊','Quantify achievements with numbers and %'],
+          ['💼','Add a professional summary with role keywords'],
+          ['⚡','List skills as a dedicated comma-separated section'],
+        ].map(([i,t])=>`<div style="padding:10px;background:rgba(255,255,255,0.03);border-radius:8px;display:flex;gap:8px;font-size:13px"><span>${i}</span><span style="color:var(--sub)">${t}</span></div>`).join('')}</div></div>`;
+    hide('atsLoader');block('atsResults');
+  }catch(e){hide('atsLoader');$('atsResults').innerHTML=`<div class="card"><div class="status-bar error">❌ Backend not reachable.</div></div>`;block('atsResults');}
+}
+
+// ── ROLES ─────────────────────────────────────────────────────────────────────
+function renderRoles(roles){
+  if(!roles||!roles.length)return;
+  hide('rolesEmpty');
+  $('rolesResults').innerHTML=roles.map((r,i)=>`
+    <div class="card" style="margin-bottom:14px;border-left:3px solid ${i===0?'var(--green)':i===1?'var(--blue)':'var(--indigo)'}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+            ${i===0?tag('🏆 Best Match','tag-green'):i===1?tag('⭐ Strong','tag-blue'):`<span style="font-size:12px;color:var(--muted)">#${i+1}</span>`}
+            <span style="font-size:15px;font-weight:700">${r.role}</span>
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:6px">✅ ${(r.matching_skills||r.matching||[]).length} matched &nbsp; ❌ ${(r.missing_skills||r.missing||[]).length} missing</div>
+          <div>${(r.matching_skills||r.matching||[]).slice(0,8).map(s=>tag(s,'tag-green')).join('')}</div>
+          ${(r.missing_skills||r.missing||[]).length?`<div class="mt8">${(r.missing_skills||r.missing).slice(0,5).map(s=>tag(s,'tag-red')).join('')}</div>`:''}
+        </div>
+        <div>${circle(r.match_percent)}<div style="text-align:center;font-size:11px;color:var(--muted);margin-top:5px">Match</div></div>
+      </div>
+      <div class="mt12">${pb('Compatibility',r.match_percent,r.match_percent>=70?'#10b981':r.match_percent>=50?'#f59e0b':'#ef4444')}</div>
+    </div>`).join('');
+}
+
+// ── GAP ───────────────────────────────────────────────────────────────────────
+async function analyzeGap(){
+  if(!resumeData){alert('Upload resume in Analyzer tab first!');return;}
+  const role=$('gapRole').value;
+  hide('gapEmpty');hide('gapResults');block('gapLoader');
+  try{
+    const fd=new FormData();fd.append('file',uploadedFile);
+    const r1=await fetch(`${API}/api/resume/upload`,{method:'POST',body:fd});
+    const d1=await r1.json();
+    const r2=await fetch(`${API}/api/analysis/skills`,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text:d1.raw_text||'',target_role:role||undefined})});
+    const data=await r2.json();const gap=data.skill_gap;
+    $('gapResults').innerHTML=`
+      <div class="grid2">
+        <div class="card" style="text-align:center">
+          ${circle(gap.readiness_score)}
+          <div style="margin-top:10px;font-size:15px;font-weight:700">Industry Readiness</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:3px">${gap.domain}</div>
+          <div class="mt12">${pb('Readiness',gap.readiness_score,sc(gap.readiness_score))}</div>
+          <div class="status-bar ${gap.readiness_score>=70?'success':gap.readiness_score>=50?'info':'error'} mt8">
+            ${gap.readiness_score>=80?'🟢 Industry-ready!':gap.readiness_score>=60?'🟡 Almost there!':'🔴 Significant gaps remain.'}</div>
+        </div>
+        <div class="card">
+          <div style="margin-bottom:12px">
+            <div style="font-size:13px;color:#6ee7b7;font-weight:600;margin-bottom:6px">✅ Skills You Have (${gap.present_skills?.length||0})</div>
+            <div>${(gap.present_skills||[]).map(s=>tag(s,'tag-green')).join('')||'<span style="color:var(--muted);font-size:13px">None detected</span>'}</div>
+          </div><hr>
+          <div>
+            <div style="font-size:13px;color:#fca5a5;font-weight:600;margin-bottom:6px">❌ Missing Skills (${gap.missing_skills?.length||0})</div>
+            <div>${(gap.missing_skills||[]).map(s=>tag(s,'tag-red')).join('')||'<span style="color:var(--muted);font-size:13px">None missing!</span>'}</div>
+          </div>
+        </div>
+      </div>`;
+    hide('gapLoader');block('gapResults');
+  }catch(e){hide('gapLoader');$('gapResults').innerHTML=`<div class="card"><div class="status-bar error">❌ Backend not reachable.</div></div>`;block('gapResults');}
+}
+
+// ── ROADMAP ───────────────────────────────────────────────────────────────────
+async function generateRoadmap(){
+  const role=$('roadmapRole').value;const level=$('roadmapLevel').value;
+  if(!role){alert('Please select a target role!');return;}
+  $('roadmapResults').innerHTML='';block('roadmapLoader');
+  try{
+    const res=await fetch(`${API}/api/roadmap/generate`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({role,level})});
+    const data=await res.json();
+    const pc=['#3b82f6','#10b981','#f59e0b','#a855f7'];
+    let html=`<div class="card" style="text-align:center;background:linear-gradient(135deg,rgba(99,102,241,0.1),rgba(139,92,246,0.1))">
+      <div style="font-size:20px;font-weight:800">${data.role}</div>
+      <div style="font-size:13px;color:var(--muted);margin-top:4px">${data.estimated_weeks}-week ${level} roadmap</div></div>`;
+    data.roadmap?.forEach((ph,i)=>{const c=pc[i%4];
+      html+=`<div class="card" style="border-left:3px solid ${c}">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:6px">
+          <div style="font-size:14px;font-weight:700;color:${c}">${ph.phase}</div>${tag('Phase '+(i+1),'tag-blue')}</div>
+        <div class="grid2">
+          <div><div style="font-size:12px;color:var(--sub);font-weight:600;margin-bottom:6px">🎯 Goals</div>
+            ${ph.goals?.map(g=>`<div style="font-size:13px;color:var(--sub);margin-bottom:4px;padding-left:8px;border-left:2px solid ${c}44">• ${g}</div>`).join('')}</div>
+          <div><div style="font-size:12px;color:var(--sub);font-weight:600;margin-bottom:6px">📚 Resources</div>
+            ${ph.resources?.map(r=>`<div style="font-size:13px;color:var(--sub);margin-bottom:3px">→ ${r}</div>`).join('')}
+            <div style="margin-top:8px;padding:7px 10px;background:${c}11;border-radius:6px;font-size:12px">
+              <span style="color:${c};font-weight:600">🏗️ </span><span style="color:var(--sub)">${ph.project}</span></div>
+          </div></div></div>`;});
+    if(data.certifications?.length)html+=`<div class="card"><div class="card-title">🏆 Certifications</div><div>${data.certifications.map(c=>tag(c,'tag-yellow')).join('')}</div></div>`;
+    if(data.practice_platforms?.length)html+=`<div class="card"><div class="card-title">💻 Practice Platforms</div><div>${data.practice_platforms.map(p=>tag(p,'tag-purple')).join('')}</div></div>`;
+    $('roadmapResults').innerHTML=html;hide('roadmapLoader');
+  }catch(e){hide('roadmapLoader');$('roadmapResults').innerHTML=`<div class="card"><div class="status-bar error">❌ Backend not reachable.</div></div>`;}
+}
+
+// ── INTERVIEW ─────────────────────────────────────────────────────────────────
+async function startInterview(){
+  const role=$('interviewRole').value;
+  hide('interviewEmpty');block('interviewBox');
+  $('chatMessages').innerHTML='';scores=[];qIndex=0;questions=[];
+  try{
+    const res=await fetch(`${API}/api/interview/start`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({role,question_count:5})});
+    const data=await res.json();
+    sessionId=data.session_id;questions=data.questions||[];
+    updateStats();
+    addBubble('ai',`👋 Welcome to your ${role} interview! I will ask ${questions.length} questions.\n\n${questions[0]}`);
+  }catch(e){addBubble('ai','❌ Cannot connect to backend. Make sure Flask is running!');}
+}
+
+async function submitAnswer(){
+  const answer=$('answerInput').value.trim();
+  if(!answer||qIndex>=questions.length)return;
+  addBubble('user',answer);$('answerInput').value='';
+  const currentQ=questions[qIndex];addBubble('ai','⏳ Evaluating...');
+  try{
+    const res=await fetch(`${API}/api/interview/answer`,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({session_id:sessionId,question:currentQ,answer})});
+    const data=await res.json();const ev=data.evaluation;const s=ev.scores;
+    $('chatMessages').lastElementChild?.remove();
+    const sb=Object.entries(s).map(([k,v])=>{const c=v>=70?'#10b981':v>=50?'#f59e0b':'#ef4444';
+      return `<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span style="color:var(--muted)">${k}</span><span style="color:${c};font-weight:700">${v}/100</span></div>`;}).join('');
+    scores.push(s.Overall||65);qIndex++;
+    let msg=`📊 Feedback:\n${sb}\n💡 ${ev.suggestions?.[0]||'Good answer!'}`;
+    if(qIndex<questions.length)msg+=`\n\n━━━━━━━━━\n\n❓ Next Question:\n${questions[qIndex]}`;
+    else{const avg=Math.round(scores.reduce((a,b)=>a+b,0)/scores.length);
+      msg+=`\n\n🎉 Interview complete! Avg score: ${avg}/100\n${avg>=70?'Excellent! You are interview-ready. 🚀':avg>=50?'Good effort! Keep practicing.':'Keep practicing! Consistency is key.'}`;
+      $('sessionDot').style.background='#ef4444';}
+    addBubble('ai',msg);updateStats();
+  }catch(e){addBubble('ai','❌ Error. Check backend connection.');}
+}
+
+function addBubble(role,text){
+  const msgs=$('chatMessages');
+  const wrap=document.createElement('div');wrap.className=`bubble-wrap ${role}`;
+  wrap.innerHTML=`<div class="bubble-name">${role==='user'?'You':'🤖 AI Interviewer'}</div><div class="bubble ${role}">${text}</div>`;
+  msgs.appendChild(wrap);msgs.scrollTop=msgs.scrollHeight;
+}
+function updateStats(){
+  const el=$('interviewStats');
+  const avg=scores.length?Math.round(scores.reduce((a,b)=>a+b,0)/scores.length):0;
+  el.style.display='block';
+  el.innerHTML=`Questions: <strong style="color:var(--text)">${qIndex}/${questions.length}</strong> &nbsp;|&nbsp; Avg: <strong style="color:${sc(avg)}">${avg||'—'}/100</strong>`;
+}
+function resetInterview(){
+  sessionId=null;questions=[];qIndex=0;scores=[];
+  hide('interviewBox');block('interviewEmpty');
+  $('interviewStats').style.display='none';
+}
+$('answerInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();submitAnswer();}});
+
+// ── ENHANCE ───────────────────────────────────────────────────────────────────
+// ── ENHANCE TAB SWITCHER ──────────────────────────────────────────────────────
+function switchEnhTab(n){
+  $('enhMode1').style.display=n===1?'block':'none';
+  $('enhMode2').style.display=n===2?'block':'none';
+  $('enhTab1').style.background=n===1?'rgba(99,102,241,0.25)':'transparent';
+  $('enhTab1').style.color=n===1?'#a5b4fc':'var(--sub)';
+  $('enhTab2').style.background=n===2?'rgba(99,102,241,0.25)':'transparent';
+  $('enhTab2').style.color=n===2?'#a5b4fc':'var(--sub)';
+  hide('enhanceResults');
+}
+
+// ── FULL RESUME OPTIMIZER ─────────────────────────────────────────────────────
+async function enhanceFullResume(){
+  const text=$('fullResumeInput').value.trim();
+  if(!text){alert('Please paste your complete resume text!');return;}
+  const role=$('enhRole').value;
+  const jd=$('enhJD').value.trim();
+  const fmt=$('enhFormat').value;
+  hide('enhanceResults');block('enhanceLoader');
+
+  try{
+    // Step 1: Get skill analysis from backend
+    const res=await fetch(`${API}/api/analysis/skills`,{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text,target_role:role||undefined})});
+    const data=await res.json();
+    const skills=data.skill_gap?.user_skills||[];
+    const missingSkills=data.skill_gap?.missing_skills||[];
+    const topRole=data.predicted_roles?.[0]?.role||role||'Software Engineer';
+
+    // Step 2: Get bullet enhancements
+    const res2=await fetch(`${API}/api/analysis/enhance`,{method:'POST',
+      headers:{'Content-Type':'application/json'},body:JSON.stringify({text})});
+    const eData=await res2.json();
+    const enhanced=eData.enhanced_bullets||[];
+
+    // Step 3: Build optimized resume
+    const optimized=buildOptimizedResume(text,skills,missingSkills,enhanced,topRole,jd);
+
+    // Step 4: Calculate new ATS score
+    const newATS=calcLocalATS(optimized,jd);
+
+    hide('enhanceLoader');
+    $('enhanceResults').innerHTML=`
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:16px">
+          <div class="card-title" style="margin-bottom:0">✅ ATS-Optimized Resume Ready</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-success btn-sm" onclick="downloadResume('txt')">⬇️ Download .txt</button>
+            <button class="btn btn-primary btn-sm" onclick="downloadResume('html')">⬇️ Download .html</button>
+            <button class="btn btn-ghost btn-sm" onclick="copyResume()">📋 Copy</button>
+          </div>
+        </div>
+
+        <!-- ATS score comparison -->
+        <div class="grid2" style="margin-bottom:16px">
+          <div style="padding:14px;background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.2);border-radius:10px;text-align:center">
+            <div style="font-size:11px;color:var(--muted);margin-bottom:4px">BEFORE</div>
+            <div style="font-size:28px;font-weight:900;color:#ef4444">${calcLocalATS(text,'')}</div>
+            <div style="font-size:11px;color:var(--muted)">ATS Score</div>
+          </div>
+          <div style="padding:14px;background:rgba(16,185,129,0.07);border:1px solid rgba(16,185,129,0.2);border-radius:10px;text-align:center">
+            <div style="font-size:11px;color:var(--muted);margin-bottom:4px">AFTER OPTIMIZATION</div>
+            <div style="font-size:28px;font-weight:900;color:#10b981">${newATS}</div>
+            <div style="font-size:11px;color:var(--muted)">ATS Score</div>
+          </div>
+        </div>
+
+        <!-- Added keywords -->
+        ${missingSkills.length?`<div style="margin-bottom:14px">
+          <div style="font-size:13px;font-weight:600;color:#6ee7b7;margin-bottom:6px">✅ Keywords Added for ${topRole}</div>
+          <div>${missingSkills.slice(0,8).map(s=>tag(s,'tag-green')).join('')}</div>
+        </div>`:''}
+
+        <!-- Resume preview -->
+        <div style="background:rgba(0,0,0,0.4);border-radius:10px;padding:20px;
+          font-size:13px;line-height:1.9;color:var(--text);white-space:pre-wrap;
+          border:1px solid var(--border);max-height:500px;overflow-y:auto;font-family:'JetBrains Mono',monospace"
+          id="optimizedResumeText">${optimized}</div>
+        <div class="tip-box mt12">💡 Review the resume, update with your real metrics and dates, then download. Always tailor for each application.</div>
+      </div>`;
+    block('enhanceResults');
+  }catch(e){
+    hide('enhanceLoader');
+    $('enhanceResults').innerHTML=`<div class="card"><div class="status-bar error">❌ Backend not reachable. Make sure Flask is running on port 5000.</div></div>`;
+    block('enhanceResults');
+  }
+}
+
+function buildOptimizedResume(original,skills,missingSkills,enhanced,role,jd){
+  // Extract name from first line
+  const lines=original.split('\n').filter(l=>l.trim());
+  const name=lines[0]||'Your Name';
+
+  // Extract email/phone/links
+  const email=(original.match(/[\w.+-]+@[\w-]+\.\w+/)||['your.email@gmail.com'])[0];
+  const phone=(original.match(/\+?[\d\s\-().]{10,15}/)||[''])[0].trim()||'+91-XXXXXXXXXX';
+  const github=(original.match(/github\.com\/[\w-]+/i)||['github.com/yourprofile'])[0];
+  const linkedin=(original.match(/linkedin\.com\/in\/[\w-]+/i)||['linkedin.com/in/yourprofile'])[0];
+
+  // Build skill list — existing + add missing for role
+  const allSkills=[...new Set([...skills,...missingSkills.slice(0,4)])];
+  const techSkills=allSkills.filter(s=>!['leadership','communication','teamwork','agile','scrum','problem solving'].includes(s));
+  const softSkills=allSkills.filter(s=>['leadership','communication','teamwork','agile','scrum','problem solving'].includes(s));
+
+  // Enhanced bullets
+  const goodBullets=enhanced.filter(b=>b.improved).map(b=>b.enhanced);
+  const okBullets=enhanced.filter(b=>!b.improved).map(b=>b.original);
+  const allBullets=[...goodBullets,...okBullets];
+
+  const now=new Date();
+  const yr=now.getFullYear();
+
+  return `${name.toUpperCase()}
+${'═'.repeat(60)}
+📧 ${email}  |  📱 ${phone}
+🔗 ${linkedin}  |  💻 ${github}
+
+PROFESSIONAL SUMMARY
+${'─'.repeat(60)}
+Results-driven ${role} with hands-on experience in ${techSkills.slice(0,4).join(', ')}. 
+Proven track record of delivering scalable solutions and collaborating 
+in Agile environments. Passionate about building impactful technology 
+and continuously learning industry best practices.
+
+TECHNICAL SKILLS
+${'─'.repeat(60)}
+Languages    : ${techSkills.filter(s=>['python','javascript','typescript','java','c++','c#','r','sql','html','css','bash','go','rust','kotlin','swift'].includes(s)).join(', ')||'Python, JavaScript, SQL'}
+Frameworks   : ${techSkills.filter(s=>['react','angular','vue','django','flask','node.js','fastapi','spring','tensorflow','pytorch','next.js'].includes(s)).join(', ')||'React, Flask, Node.js'}
+Databases    : ${techSkills.filter(s=>['mysql','postgresql','mongodb','redis','sqlite','oracle','elasticsearch','firebase'].includes(s)).join(', ')||'MySQL, MongoDB'}
+Tools        : ${techSkills.filter(s=>['git','github','docker','kubernetes','aws','azure','gcp','jenkins','figma','jira','tableau'].includes(s)).join(', ')||'Git, Docker, AWS'}
+Soft Skills  : ${softSkills.join(', ')||'Leadership, Communication, Problem Solving, Agile, Teamwork'}
+
+WORK EXPERIENCE
+${'─'.repeat(60)}
+${role} | Company Name                                 [Month ${yr-1} – Present]
+${allBullets.slice(0,4).map(b=>`• ${b}`).join('\n')||`• Developed and maintained scalable ${role.split(' ')[0].toLowerCase()} solutions using modern tech stack
+• Collaborated with cross-functional teams to deliver features on time
+• Improved system performance by 35% through code optimization and best practices
+• Participated in code reviews and mentored junior team members`}
+
+Intern – ${role} | Internship Company                  [Month ${yr-2} – Month ${yr-1}]
+${allBullets.slice(4,7).map(b=>`• ${b}`).join('\n')||`• Built and deployed 3 production-ready features using ${techSkills.slice(0,2).join(' and ')}
+• Reduced bug count by 40% by implementing comprehensive unit testing
+• Contributed to Agile sprints and participated in daily stand-ups`}
+
+PROJECTS
+${'─'.repeat(60)}
+${role.includes('Data')?'Data Analysis Dashboard':'AI-Powered Web Application'} | Personal Project       [${yr}]
+• Built end-to-end application using ${techSkills.slice(0,3).join(', ')||'Python, React, Flask'}
+• Deployed on cloud platform with CI/CD pipeline for automated testing
+• GitHub: ${github}
+
+${role.includes('Full')||role.includes('Web')||role.includes('Frontend')?'E-Commerce Platform':'Resume ATS Analyzer'} | Academic Project           [${yr-1}]
+• Designed and implemented complete solution with ${techSkills.slice(2,5).join(', ')||'REST APIs, SQL, Git'}
+• Achieved 95% test coverage and maintained clean code architecture
+
+EDUCATION
+${'─'.repeat(60)}
+Bachelor of Technology — Computer Science Engineering
+ABC University                                        [${yr-4} – ${yr}]
+CGPA: 8.5/10
+
+CERTIFICATIONS
+${'─'.repeat(60)}
+• AWS Cloud Practitioner (${yr})
+• ${role.includes('Data')||role.includes('ML')||role.includes('AI')?'Google Data Analytics Professional Certificate':'Meta Front-End Developer Certificate'} (${yr})
+
+ACHIEVEMENTS
+${'─'.repeat(60)}
+• Top 10% in university batch with consistent academic performance
+• Solved 200+ DSA problems on LeetCode with focus on ${role.split(' ')[0]} patterns
+• Active open-source contributor on GitHub (${github})
+
+${'═'.repeat(60)}
+Generated by SmartHire AI • ATS-Optimized for ${role}`;
+}
+
+function calcLocalATS(text,jd){
+  const t=text.toLowerCase();
+  const techKw=['python','javascript','react','sql','git','docker','aws','flask','node','mongodb','postgresql','java','typescript','kubernetes','tensorflow','pandas','numpy'];
+  const skillScore=Math.min(100,techKw.filter(k=>t.includes(k)).length*7);
+  const eduScore=Math.min(100,['bachelor','master','degree','university','college','cgpa','gpa'].filter(k=>t.includes(k)).length*16);
+  const expScore=Math.min(100,['experience','developed','built','designed','managed','led','implemented','deployed'].filter(k=>t.includes(k)).length*11);
+  const projScore=Math.min(100,['project','github','application','system','api','platform'].filter(k=>t.includes(k)).length*14);
+  const fmtScore=Math.min(100,['skills','experience','education','projects','summary','certifications'].filter(k=>t.includes(k)).length*14);
+  let kwScore=skillScore;
+  if(jd){
+    const jdW=new Set((jd.toLowerCase().match(/\b\w{4,}\b/g)||[]));
+    const rsW=new Set((t.match(/\b\w{4,}\b/g)||[]));
+    kwScore=Math.min(100,Math.round([...jdW].filter(w=>rsW.has(w)).length/Math.max(jdW.size,1)*250));
+  }
+  return Math.round((skillScore+eduScore+expScore+projScore+fmtScore+kwScore)/6);
+}
+
+function downloadResume(format){
+  const text=$('optimizedResumeText')?.innerText||'';
+  if(!text){alert('Please optimize resume first!');return;}
+  if(format==='html'){
+    const htmlContent=`<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Resume</title>
+      <style>body{font-family:'Segoe UI',sans-serif;max-width:800px;margin:40px auto;padding:0 24px;color:#1a1a2e;line-height:1.7}
+      pre{white-space:pre-wrap;font-family:inherit;font-size:14px}</style></head>
+      <body><pre>${text}</pre></body></html>`;
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([htmlContent],{type:'text/html'}));
+    a.download='optimized_resume.html';a.click();
+  } else {
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([text],{type:'text/plain'}));
+    a.download='optimized_resume.txt';a.click();
+  }
+}
+
+function copyResume(){
+  const text=$('optimizedResumeText')?.innerText||'';
+  navigator.clipboard?.writeText(text).then(()=>alert('Resume copied to clipboard! ✅'));
+}
+
+// ── BULLET ONLY ENHANCE ───────────────────────────────────────────────────────
+async function enhanceResume(){
+  const text=$('bulletInput').value.trim();if(!text)return;
+  hide('enhanceResults');block('enhanceLoader');
+  try{
+    const res=await fetch(`${API}/api/analysis/enhance`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})});
+    const data=await res.json();const bullets=data.enhanced_bullets||[];
+    let html=`<div class="card"><div class="card-title">✅ Enhanced Bullets</div>
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <button class="btn btn-ghost btn-sm" onclick="copyBullets()">📋 Copy All</button>
+        <button class="btn btn-ghost btn-sm" onclick="downloadBullets()">⬇️ Download</button>
+      </div>`;
+    bullets.forEach(b=>{
+      if(b.improved)html+=`<div class="bullet-row"><div class="bullet-before">❌ ${b.original}</div><div style="text-align:center;color:var(--muted)">→</div><div class="bullet-after" id="eb_${Math.random().toString(36).slice(2)}">✅ ${b.enhanced}</div></div>`;
+      else html+=`<div style="padding:10px 12px;border-radius:8px;background:rgba(16,185,129,0.07);border:1px solid rgba(16,185,129,0.2);font-size:13px;color:#6ee7b7;margin-bottom:8px">✅ ${b.original}</div>`;
+    });
+    html+=`<div class="tip-box">💡 ${data.general_tips?.[0]||'Add quantifiable results to every bullet.'}</div></div>`;
+    $('enhanceResults').innerHTML=html;hide('enhanceLoader');block('enhanceResults');
+  }catch(e){hide('enhanceLoader');$('enhanceResults').innerHTML=`<div class="card"><div class="status-bar error">❌ Backend not reachable.</div></div>`;block('enhanceResults');}
+}
+
+function copyBullets(){
+  const texts=[...$('enhanceResults').querySelectorAll('.bullet-after')].map(el=>el.innerText.replace('✅ ','')).join('\n');
+  navigator.clipboard?.writeText(texts).then(()=>alert('Enhanced bullets copied! ✅'));
+}
+function downloadBullets(){
+  const texts=[...$('enhanceResults').querySelectorAll('.bullet-after')].map(el=>el.innerText.replace('✅ ','')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([texts],{type:'text/plain'}));
+  a.download='enhanced_bullets.txt';a.click();
+}
+
+// ── HISTORY ───────────────────────────────────────────────────────────────────
+function saveHistory(filename,score,skills){
+  if(!currentUser)return;
+  const entry={filename,score,skills:skills.slice(0,5),date:new Date().toLocaleDateString(),time:new Date().toLocaleTimeString()};
+  scoreHistory.unshift(entry);
+  if(scoreHistory.length>20)scoreHistory=scoreHistory.slice(0,20);
+  localStorage.setItem('sh_history_'+currentUser.email,JSON.stringify(scoreHistory));
+}
+
+function renderHistory(){
+  scoreHistory=JSON.parse(localStorage.getItem('sh_history_'+(currentUser?.email||'guest'))||'[]');
+  if(!scoreHistory.length){
+    $('historyList').innerHTML='<div style="text-align:center;padding:30px;color:var(--muted)">No history yet. Upload a resume to start tracking your progress.</div>';
+    $('bestScores').innerHTML='<div style="color:var(--muted);font-size:13px">No data yet.</div>';
+    if(historyChartObj)historyChartObj.destroy();
+    return;
+  }
+  // Chart
+  const labels=scoreHistory.slice(0,10).reverse().map((_,i)=>`Scan ${i+1}`);
+  const vals=scoreHistory.slice(0,10).reverse().map(h=>h.score);
+  if(historyChartObj)historyChartObj.destroy();
+  const ctx=$('historyChart').getContext('2d');
+  historyChartObj=new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'ATS Score',data:vals,
+    borderColor:'#6366f1',backgroundColor:'rgba(99,102,241,0.1)',fill:true,tension:0.4,
+    pointBackgroundColor:'#6366f1',pointRadius:5}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{y:{min:0,max:100,grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#64748b'}},
+        x:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#64748b'}}}}});
+  // Best
+  const best=[...scoreHistory].sort((a,b)=>b.score-a.score).slice(0,3);
+  $('bestScores').innerHTML=best.map((h,i)=>`
+    <div class="history-item">
+      <div><div style="font-size:13px;font-weight:600">${['🥇','🥈','🥉'][i]} ${h.filename}</div>
+        <div style="font-size:11px;color:var(--muted)">${h.date}</div></div>
+      <div style="font-size:22px;font-weight:900;color:${sc(h.score)}">${h.score}%</div>
+    </div>`).join('');
+  // List
+  $('historyList').innerHTML=scoreHistory.map(h=>`
+    <div class="history-item">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="font-size:20px;font-weight:900;color:${sc(h.score)};min-width:44px">${h.score}%</div>
+        <div><div style="font-size:13px;font-weight:600">${h.filename}</div>
+          <div style="font-size:11px;color:var(--muted)">${h.date} at ${h.time}</div>
+          <div style="margin-top:4px">${h.skills.map(s=>tag(s,'tag-blue')).join('')}</div></div>
+      </div>
+    </div>`).join('');
+}
+function clearHistory(){
+  if(confirm('Clear all scan history?')){
+    scoreHistory=[];
+    if(currentUser)localStorage.removeItem('sh_history_'+currentUser.email);
+    renderHistory();
+  }
+}
+
+// ── LINKEDIN ──────────────────────────────────────────────────────────────────
+function openLinkedIn(){
+  const url=$('linkedinURL').value.trim();
+  if(!url){
+    // Open LinkedIn profile page
+    window.open('https://www.linkedin.com/in/','_blank');
+    return;
+  }
+  // Validate it's a LinkedIn URL
+  if(!url.includes('linkedin.com')){
+    alert('Please enter a valid LinkedIn URL like: https://www.linkedin.com/in/yourname');
+    return;
+  }
+  window.open(url,'_blank');
+  // Show instruction toast
+  setTimeout(()=>{
+    $('linkedinText').placeholder='Now paste your copied LinkedIn profile text here (Ctrl+V)...';
+    $('linkedinText').focus();
+  },500);
+}
+$('linkedinChecklist').innerHTML=[
+  ['🖼️','Professional photo','Profiles with photos get 21x more views'],
+  ['✍️','Compelling headline with keywords','Beyond just job title'],
+  ['📖','500+ character About section','Tell your story not just resume'],
+  ['🔗','Custom LinkedIn URL','linkedin.com/in/yourname'],
+  ['⭐','500+ connections','Signals active networking'],
+  ['📜','50+ Skills & endorsements','Improves search ranking'],
+  ['🏆','3+ Recommendations','Social proof builds credibility'],
+  ['📊','Featured section with projects','Showcase your best work'],
+].map(([i,t,s])=>`<div style="padding:10px 12px;background:rgba(255,255,255,0.03);border-radius:8px;display:flex;gap:10px;font-size:13px">
+  <span>${i}</span><div><div style="color:var(--text);font-weight:600">${t}</div><div style="color:var(--muted);font-size:12px">${s}</div></div></div>`).join('');
+
+async function analyzeLinkedIn(){
+  const text=$('linkedinText').value.trim();
+  if(!text){alert('Please paste your LinkedIn profile text!');return;}
+  hide('linkedinResults');block('linkedinLoader');
+  try{
+    const res=await fetch(`${API}/api/analysis/skills`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})});
+    const data=await res.json();
+    const skills=data.skill_gap?.user_skills||[];
+    const roles=data.predicted_roles||[];
+    const checks=[
+      {label:'Has role keywords in headline',pass:/developer|engineer|analyst|scientist|manager|designer/i.test(text)},
+      {label:'About / Summary section present',pass:text.length>300},
+      {label:'Work Experience mentioned',pass:/experience|worked|years|company|internship/i.test(text)},
+      {label:'Skills listed (4+)',pass:skills.length>=4},
+      {label:'Education mentioned',pass:/university|college|bachelor|degree|b\.tech/i.test(text)},
+      {label:'Certifications present',pass:/certified|certification|certificate/i.test(text)},
+      {label:'Projects / Portfolio present',pass:/project|github|built|developed/i.test(text)},
+      {label:'Contact info present',pass:/email|phone|linkedin|github/i.test(text)},
+    ];
+    const passed=checks.filter(c=>c.pass).length;
+    const profileScore=Math.round(passed/checks.length*100);
+    $('linkedinResults').innerHTML=`
+      <div class="grid2">
+        <div class="card" style="text-align:center">
+          ${circle(profileScore)}
+          <div style="margin-top:10px;font-size:15px;font-weight:700">Profile Strength</div>
+          <div class="mt12">${pb('LinkedIn Score',profileScore,sc(profileScore))}</div>
+          <div class="status-bar ${profileScore>=70?'success':profileScore>=50?'info':'error'} mt8">
+            ${profileScore>=80?'🟢 Strong profile! You stand out.':profileScore>=60?'🟡 Good — improve missing sections':'🔴 Needs significant improvement'}</div>
+        </div>
+        <div class="card">
+          <div class="card-title">✅ Profile Checklist</div>
+          ${checks.map(c=>`<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:13px">
+            <span style="color:${c.pass?'var(--green)':'var(--red)'};font-size:16px">${c.pass?'✅':'❌'}</span>
+            <span style="color:${c.pass?'var(--text)':'var(--muted)'}">${c.label}</span></div>`).join('')}
+        </div>
+      </div>
+      <div class="card"><div class="card-title">⚡ Skills in Profile (${skills.length})</div>
+        <div>${skills.slice(0,20).map(s=>tag(s,'tag-blue')).join('')||'<span style="color:var(--muted);font-size:13px">No skills detected. Add more technical skills to your profile.</span>'}</div></div>
+      <div class="card"><div class="card-title">💼 Matching Roles</div>
+        ${roles.slice(0,3).map(r=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:rgba(255,255,255,0.03);border-radius:8px;margin-bottom:8px">
+          <span style="font-size:14px;font-weight:600">${r.role}</span>
+          <span style="font-size:16px;font-weight:900;color:${sc(r.match_percent)}">${r.match_percent}%</span></div>`).join('')||'<span style="color:var(--muted);font-size:13px">Add more skills for role predictions.</span>'}</div>`;
+    hide('linkedinLoader');block('linkedinResults');
+  }catch(e){hide('linkedinLoader');$('linkedinResults').innerHTML=`<div class="card"><div class="status-bar error">❌ Backend not reachable. Make sure Flask is running.</div></div>`;block('linkedinResults');}
+}
+
+// ── COVER LETTER ──────────────────────────────────────────────────────────────
+async function generateCoverLetter(){
+  const name=$('clName').value.trim();
+  const company=$('clCompany').value.trim();
+  const title=$('clTitle').value.trim();
+  const jd=$('clJD').value.trim();
+  const tone=$('clTone').value;
+  if(!name||!company||!title){alert('Please fill in Your Name, Company Name, and Job Title!');return;}
+  hide('clResults');block('clLoader');
+  const skills=resumeData?.skills?.slice(0,5)||['Python','JavaScript','problem-solving'];
+  const letter=buildLetter(name,company,title,skills,jd,tone);
+  setTimeout(()=>{
+    $('clResults').innerHTML=`<div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+        <div class="card-title" style="margin-bottom:0">✉️ Generated Cover Letter</div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost btn-sm" onclick="copyLetter()">📋 Copy</button>
+          <button class="btn btn-ghost btn-sm" onclick="downloadLetter()">⬇️ Download</button>
+        </div>
+      </div>
+      <div id="letterText" style="background:rgba(0,0,0,0.3);border-radius:10px;padding:20px;
+        font-size:14px;line-height:1.9;color:var(--text);white-space:pre-wrap;border:1px solid var(--border)">${letter}</div>
+      <div class="tip-box mt12">💡 Personalize this letter by adding specific achievements and numbers from your experience.</div></div>`;
+    hide('clLoader');block('clResults');
+  },1500);
+}
+
+function buildLetter(name,company,title,skills,jd,tone){
+  const today=new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  const topSkills=skills.join(', ');
+  const openers={
+    professional:`I am writing to express my strong interest in the ${title} position at ${company}.`,
+    enthusiastic:`I am incredibly excited to apply for the ${title} role at ${company} — a company I have long admired for its innovation and impact!`,
+    concise:`I am applying for the ${title} position at ${company} and believe my skills make me an excellent fit.`,
+    creative:`When I came across the ${title} opportunity at ${company}, I knew immediately that this was exactly where my skills and passion could make the biggest impact.`
+  };
+  return `${today}
+
+Hiring Manager
+${company}
+
+Dear Hiring Manager,
+
+${openers[tone]||openers.professional}
+
+With hands-on experience in ${topSkills}, I bring both the technical depth and collaborative mindset that ${company} values. ${jd?`After carefully reviewing the job description, I am confident my background aligns strongly with your key requirements.`:''}
+
+Throughout my journey, I have developed a strong foundation in building scalable solutions, working effectively in team environments, and delivering high-quality results on time. I am particularly drawn to ${company} because of its commitment to excellence and the opportunity to work on meaningful, impactful technology.
+
+I am eager to bring my skills, dedication, and fresh perspective to your team. I would welcome the opportunity to discuss how I can contribute to ${company}'s continued success.
+
+Thank you for considering my application. I look forward to hearing from you.
+
+${tone==='enthusiastic'?'Enthusiastically yours,':tone==='concise'?'Best regards,':tone==='creative'?'With excitement,':'Sincerely,'}
+${name}`;
+}
+
+function copyLetter(){
+  const text=$('letterText')?.innerText||'';
+  navigator.clipboard?.writeText(text).then(()=>alert('Cover letter copied! ✅'));
+}
+function downloadLetter(){
+  const text=$('letterText')?.innerText||'';
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([text],{type:'text/plain'}));
+  a.download='cover_letter.txt';a.click();
+}
+
+// ── JOBS ──────────────────────────────────────────────────────────────────────
+const JOBS={
+  'Frontend Developer':[
+    {title:'Frontend Developer',company:'Flipkart',location:'Bangalore, India',exp:'0-2 yrs',salary:'₹4-8 LPA',skills:['React','JavaScript','CSS'],link:'https://www.linkedin.com/jobs/search/?keywords=frontend+developer'},
+    {title:'React Developer',company:'Swiggy',location:'Bangalore, India',exp:'1-3 yrs',salary:'₹6-12 LPA',skills:['React','TypeScript','Redux'],link:'https://www.linkedin.com/jobs/search/?keywords=react+developer'},
+    {title:'UI Developer',company:'Infosys',location:'Multiple Cities',exp:'Fresher',salary:'₹3.5-5 LPA',skills:['HTML','CSS','JavaScript'],link:'https://www.infosys.com/careers'},
+    {title:'Frontend Engineer',company:'Razorpay',location:'Bangalore, India',exp:'1-2 yrs',salary:'₹8-15 LPA',skills:['React','Next.js','TypeScript'],link:'https://www.linkedin.com/jobs/search/?keywords=frontend+engineer+razorpay'},
+    {title:'Web Developer',company:'TCS',location:'Pan India',exp:'Fresher',salary:'₹3.36 LPA',skills:['HTML','CSS','JavaScript'],link:'https://www.tcs.com/careers'},
+  ],
+  'Data Analyst':[
+    {title:'Data Analyst',company:'Amazon',location:'Hyderabad, India',exp:'0-2 yrs',salary:'₹6-12 LPA',skills:['SQL','Python','Tableau'],link:'https://www.amazon.jobs/en/search?query=data+analyst'},
+    {title:'Business Analyst',company:'Accenture',location:'Multiple Cities',exp:'Fresher',salary:'₹4-7 LPA',skills:['Excel','SQL','Power BI'],link:'https://www.accenture.com/in-en/careers'},
+    {title:'Data Analyst',company:'Zomato',location:'Gurgaon, India',exp:'1-3 yrs',salary:'₹7-13 LPA',skills:['Python','SQL','Analytics'],link:'https://www.linkedin.com/jobs/search/?keywords=data+analyst+zomato'},
+    {title:'Analytics Engineer',company:'PhonePe',location:'Bangalore, India',exp:'1-2 yrs',salary:'₹8-15 LPA',skills:['SQL','Python','dbt'],link:'https://www.linkedin.com/jobs/search/?keywords=analytics+engineer'},
+  ],
+  'Python Developer':[
+    {title:'Python Developer',company:'Wipro',location:'Multiple Cities',exp:'0-2 yrs',salary:'₹4-8 LPA',skills:['Python','Django','REST APIs'],link:'https://careers.wipro.com'},
+    {title:'Backend Engineer',company:'Ola',location:'Bangalore, India',exp:'1-3 yrs',salary:'₹8-16 LPA',skills:['Python','Flask','PostgreSQL'],link:'https://www.linkedin.com/jobs/search/?keywords=python+backend+engineer'},
+    {title:'Python Developer',company:'HCL',location:'Multiple Cities',exp:'Fresher',salary:'₹3.5-5 LPA',skills:['Python','SQL','Linux'],link:'https://www.hcltech.com/careers'},
+  ],
+  'Full Stack Developer':[
+    {title:'Full Stack Developer',company:'Paytm',location:'Noida, India',exp:'1-3 yrs',salary:'₹8-15 LPA',skills:['React','Node.js','MongoDB'],link:'https://www.linkedin.com/jobs/search/?keywords=full+stack+developer'},
+    {title:'Software Engineer',company:'CRED',location:'Bangalore, India',exp:'1-2 yrs',salary:'₹10-20 LPA',skills:['React','Python','AWS'],link:'https://www.linkedin.com/jobs/search/?keywords=software+engineer+cred'},
+    {title:'Full Stack Engineer',company:'Freshworks',location:'Chennai, India',exp:'0-2 yrs',salary:'₹7-14 LPA',skills:['React','Ruby','MySQL'],link:'https://www.freshworks.com/company/careers'},
+  ],
+  'Data Scientist':[
+    {title:'Data Scientist',company:'Microsoft',location:'Hyderabad, India',exp:'1-3 yrs',salary:'₹12-25 LPA',skills:['Python','ML','Statistics'],link:'https://careers.microsoft.com/us/en/search-results?keywords=data+scientist'},
+    {title:'ML Engineer',company:'Google',location:'Bangalore, India',exp:'2-4 yrs',salary:'₹20-40 LPA',skills:['Python','TensorFlow','Deep Learning'],link:'https://careers.google.com/jobs/results/?q=machine+learning+engineer'},
+    {title:'Data Scientist',company:'Mu Sigma',location:'Bangalore, India',exp:'Fresher',salary:'₹4-8 LPA',skills:['Python','R','Statistics'],link:'https://www.mu-sigma.com/careers'},
+  ],
+  'AI/ML Engineer':[
+    {title:'AI Engineer',company:'Samsung R&D',location:'Bangalore, India',exp:'1-3 yrs',salary:'₹10-20 LPA',skills:['Python','PyTorch','NLP'],link:'https://www.linkedin.com/jobs/search/?keywords=ai+engineer'},
+    {title:'ML Engineer',company:'Juspay',location:'Bangalore, India',exp:'2-4 yrs',salary:'₹15-25 LPA',skills:['Python','TensorFlow','MLOps'],link:'https://www.linkedin.com/jobs/search/?keywords=ml+engineer'},
+  ],
+  'DevOps Engineer':[
+    {title:'DevOps Engineer',company:'Atlassian',location:'Bangalore, India',exp:'2-4 yrs',salary:'₹15-28 LPA',skills:['Docker','Kubernetes','AWS'],link:'https://www.atlassian.com/company/careers'},
+    {title:'Cloud Engineer',company:'IBM',location:'Multiple Cities',exp:'1-3 yrs',salary:'₹8-16 LPA',skills:['AWS','Terraform','Linux'],link:'https://www.ibm.com/in-en/employment'},
+    {title:'DevOps Engineer',company:'Capgemini',location:'Multiple Cities',exp:'Fresher',salary:'₹4-7 LPA',skills:['Linux','Docker','CI/CD'],link:'https://www.capgemini.com/in-en/careers/'},
+  ],
+  'Software Engineer':[
+    {title:'Software Engineer',company:'Google',location:'Bangalore, India',exp:'2-4 yrs',salary:'₹20-45 LPA',skills:['DSA','System Design','C++'],link:'https://careers.google.com'},
+    {title:'Software Engineer',company:'Microsoft',location:'Hyderabad, India',exp:'1-3 yrs',salary:'₹15-35 LPA',skills:['C#','Azure','DSA'],link:'https://careers.microsoft.com'},
+    {title:'Software Engineer',company:'Amazon',location:'Hyderabad, India',exp:'1-3 yrs',salary:'₹15-30 LPA',skills:['Java','DSA','AWS'],link:'https://www.amazon.jobs'},
+    {title:'Software Engineer',company:'TCS',location:'Pan India',exp:'Fresher',salary:'₹3.36 LPA',skills:['Java','Python','SQL'],link:'https://www.tcs.com/careers'},
+    {title:'Associate SDE',company:'Wipro',location:'Multiple Cities',exp:'Fresher',salary:'₹3.5-5 LPA',skills:['Java','C++','DSA'],link:'https://careers.wipro.com'},
+  ],
+};
+
+async function findJobs(){
+  const role=$('jobRole').value;
+  const location=$('jobLocation').value;
+  const exp=$('jobExp').value;
+  if(!role){alert('Please select a job role!');return;}
+  hide('jobsEmpty');block('jobsLoader');
+  setTimeout(()=>{
+    let jobs=(JOBS[role]||JOBS['Software Engineer']);
+    // Filter by experience level
+    if(exp==='fresher')jobs=jobs.filter(j=>j.exp.toLowerCase().includes('fresher')||j.exp.includes('0-'));
+    // Show all if no fresher filter matches
+    if(!jobs.length)jobs=JOBS[role]||JOBS['Software Engineer'];
+    hide('jobsLoader');
+    $('jobsResults').innerHTML=`
+      <div class="card" style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+          <div class="card-title" style="margin-bottom:0">Found ${jobs.length} jobs for ${role}</div>
+          <div>${tag(location,'tag-blue')}${tag(exp,'tag-green')}</div>
+        </div>
+      </div>
+      ${jobs.map(j=>`
+        <div class="job-card" onclick="window.open('${j.link}','_blank')">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">
+            <div>
+              <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:3px">${j.title}</div>
+              <div style="font-size:13px;color:var(--blue);margin-bottom:6px">🏢 ${j.company}</div>
+              <div style="font-size:12px;color:var(--muted);display:flex;gap:12px;flex-wrap:wrap">
+                <span>📍 ${j.location}</span><span>💼 ${j.exp}</span><span>💰 ${j.salary}</span>
+              </div>
+              <div style="margin-top:8px">${j.skills.map(s=>tag(s,'tag-blue')).join('')}</div>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();window.open('${j.link}','_blank')">Apply →</button>
+          </div>
+        </div>`).join('')}
+      <div style="padding:12px 14px;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:10px;font-size:13px;color:#a5b4fc;margin-top:4px">
+        💡 Click any job card or Apply button to open the job listing on LinkedIn or company website.</div>`;
+  },1000);
+}
+
+// ── EXAMPLES ──────────────────────────────────────────────────────────────────
+$('examples').innerHTML=[
+  ['Worked on website features','Engineered 12 responsive UI components using React + TypeScript, reducing load time by 40%'],
+  ['Did data analysis tasks','Analyzed 500K+ customer records using Python & Pandas, uncovering insights that drove 18% revenue growth'],
+  ['Helped team with coding','Collaborated with 6-person Agile team to deliver 3 production features 2 weeks ahead of schedule'],
+].map(([b,a])=>`<div class="bullet-row"><div class="bullet-before">❌ ${b}</div><div style="text-align:center;color:var(--muted)">→</div><div class="bullet-after">✅ ${a}</div></div>`).join('');
+</script>
+</body>
+</html>
